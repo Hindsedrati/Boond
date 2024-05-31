@@ -13,10 +13,11 @@ import Projects from './components/project/Projectlist';
 import CreateProjectForm from './components/project/CreateProjectForm';
 import UpdateProjectForm from './components/project/UpdateProjectForm';
 import DeleteProjectForm from './components/project/DeleteProjectForm';
-import Resources from './components/resource/ResourceList';
+import Resources from './components/resource/Resourcelist';
 import CreateResourceForm from './components/resource/CreateResourceForm';
 import UpdateResourceForm from './components/resource/UpdateResourceForm';
 import DeleteResourceForm from './components/resource/DeleteResourceForm';
+import CreateActionForm from './components/action/CreateActionForm'; // Import CreateActionForm
 import Header from './components/Header';
 
 const AppRouter = (props) => {
@@ -38,6 +39,7 @@ const AppRouter = (props) => {
     handleResourceCreated,
     handleResourceUpdated,
     handleResourceDeleted,
+    handleActionCreated, // Define handleActionCreated
     states,
   } = props;
 
@@ -48,11 +50,7 @@ const AppRouter = (props) => {
         <Route path="/" element={<Home />} />
         <Route
           path="/candidates"
-          element={
-            <Candidates
-              candidates={userData.data}
-            />
-          }
+          element={<Candidates candidates={userData.data} />}
         />
         <Route
           path="/create-candidate"
@@ -68,33 +66,15 @@ const AppRouter = (props) => {
         />
         <Route
           path="/contacts"
-          element={
-            <Contacts
-              contacts={contactData.data}
-              companies={companyData}
-              states={states}
-            />
-          }
+          element={<Contacts contacts={contactData.data} companies={companyData} states={states} />}
         />
         <Route
           path="/create-contact"
-          element={
-            <CreateContactForm
-              onContactCreated={handleContactCreated}
-              companies={companyData}
-              states={states}
-            />
-          }
+          element={<CreateContactForm onContactCreated={handleContactCreated} companies={companyData} states={states} />}
         />
         <Route
           path="/update-contact"
-          element={
-            <UpdateContactForm
-              onContactUpdated={handleContactUpdated}
-              companies={companyData}
-              states={states}
-            />
-          }
+          element={<UpdateContactForm onContactUpdated={handleContactUpdated} companies={companyData} states={states} />}
         />
         <Route
           path="/delete-contact"
@@ -102,15 +82,11 @@ const AppRouter = (props) => {
         />
         <Route
           path="/projects"
-          element={
-            <Projects
-              projects={projectData.data}
-            />
-          }
+          element={<Projects projects={projectData.data} />}
         />
         <Route
           path="/create-project"
-          element={<CreateProjectForm onProjectCreated={handleProjectCreated} />}
+          element={<CreateProjectForm onProjectCreated={handleProjectCreated} contacts={contactData.data} companies={companyData} resources={resourceData.data} />}
         />
         <Route
           path="/update-project"
@@ -122,11 +98,7 @@ const AppRouter = (props) => {
         />
         <Route
           path="/resources"
-          element={
-            <Resources
-              resources={resourceData.data}
-            />
-          }
+          element={<Resources resources={resourceData.data} />}
         />
         <Route
           path="/create-resource"
@@ -139,6 +111,10 @@ const AppRouter = (props) => {
         <Route
           path="/delete-resource"
           element={<DeleteResourceForm onResourceDeleted={handleResourceDeleted} />}
+        />
+        <Route
+          path="/create-action"
+          element={<CreateActionForm onActionCreated={handleActionCreated} />} // Use CreateActionForm
         />
       </Routes>
     </Router>
@@ -163,6 +139,7 @@ AppRouter.propTypes = {
   handleResourceCreated: PropTypes.func.isRequired,
   handleResourceUpdated: PropTypes.func.isRequired,
   handleResourceDeleted: PropTypes.func.isRequired,
+  handleActionCreated: PropTypes.func.isRequired, // Add PropTypes for handleActionCreated
   states: PropTypes.object.isRequired,
 };
 

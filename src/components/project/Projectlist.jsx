@@ -14,7 +14,7 @@ const ProjectList = ({ projects }) => {
             <th>ID</th>
             <th>Nom</th>
             <th>Description</th>
-            <th>État</th>
+            
           </tr>
         </thead>
         <tbody>
@@ -23,7 +23,7 @@ const ProjectList = ({ projects }) => {
               <td>{project.id}</td>
               <td>{project.attributes.name}</td>
               <td>{project.attributes.description}</td>
-              <td>{project.attributes.state}</td>
+              
             </tr>
           ))}
         </tbody>

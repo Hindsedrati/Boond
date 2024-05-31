@@ -23,7 +23,9 @@ const Header = () => {
         <li style={styles.navItem}>
           <Link to="/projects" style={styles.navLink}>Projects</Link>
         </li>
-        
+        <li style={styles.navItem}>
+          <Link to="/actions" style={styles.navLink}>Actions</Link>
+        </li>
       </ul>
     </nav>
   );

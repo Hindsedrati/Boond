@@ -22,6 +22,11 @@ import CreateResourceForm from './components/resource/CreateResourceForm';
 import UpdateResourceForm from './components/resource/UpdateResourceForm';
 import DeleteResourceForm from './components/resource/DeleteResourceForm';
 
+import Actionlist from './components/action/Actionlist';
+import CreateActionForm from './components/action/CreateActionForm';
+import UpdateActionForm from './components/action/UpdateActionForm';
+import DeleteActionForm from './components/action/DeleteActionForm';
+
 import Header from './components/Header';
 import Home from './components/Home';
 
@@ -33,8 +38,8 @@ const App = () => {
   const [userData, setUserData] = useState(null);
   const [contactData, setContactData] = useState(null);
   const [companyData, setCompanyData] = useState([]);
-  const [projectData, setProjectData] = useState([]);
-  const [resourceData, setResourceData] = useState([]);
+  const [projectData, setProjectData] = useState(null);
+  const [resourceData, setResourceData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(false);
 
@@ -61,41 +66,99 @@ const App = () => {
 
         const jwtToken = jwtEncode(payload, ClientKey);
 
-        const fetchData = async (url) => {
-          const response = await fetch(url, {
+        const responseCandidates = await fetch(
+          'https://ui.boondmanager.com/api/candidates',
+          {
             method: 'GET',
             headers: {
               'X-Jwt-Client-Boondmanager': jwtToken
             }
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP status ${response.status}`);
           }
+        );
 
-          return await response.json();
-        };
+        if (responseCandidates.ok) {
+          const resultCandidates = await responseCandidates.json();
+          console.log('API Response Candidates:', resultCandidates);
+          setUserData(resultCandidates);
+        } else {
+          console.log('Request failed with HTTP status ' + responseCandidates.status);
+        }
 
-        const [candidates, contacts, companies, projects, resources] = await Promise.all([
-          fetchData('https://ui.boondmanager.com/api/candidates'),
-          fetchData('https://ui.boondmanager.com/api/contacts'),
-          fetchData('https://ui.boondmanager.com/api/companies'),
-          fetchData('https://ui.boondmanager.com/api/projects'),
-          fetchData('https://ui.boondmanager.com/api/resources')
-        ]);
+        const responseContacts = await fetch(
+          'https://ui.boondmanager.com/api/contacts',
+          {
+            method: 'GET',
+            headers: {
+              'X-Jwt-Client-Boondmanager': jwtToken
+            }
+          }
+        );
 
-        setUserData(candidates);
-        setContactData(contacts);
-        setCompanyData(companies.data);
-        setProjectData(projects);
-        setResourceData(resources.data.map(resource => ({
-          ...resource,
-          id: Number(resource.id)
-        })));
+        if (responseContacts.ok) {
+          const resultContacts = await responseContacts.json();
+          console.log('API Response Contacts:', resultContacts);
+          setContactData(resultContacts);
+        } else {
+          console.log('Request failed with HTTP status ' + responseContacts.status);
+        }
+
+        const responseCompanies = await fetch(
+          'https://ui.boondmanager.com/api/companies',
+          {
+            method: 'GET',
+            headers: {
+              'X-Jwt-Client-Boondmanager': jwtToken
+            }
+          }
+        );
+
+        if (responseCompanies.ok) {
+          const resultCompanies = await responseCompanies.json();
+          console.log('API Response Companies:', resultCompanies);
+          setCompanyData(resultCompanies.data);
+        } else {
+          console.log('Request failed with HTTP status ' + responseCompanies.status);
+        }
+
+        const responseProjects = await fetch(
+          'https://ui.boondmanager.com/api/projects',
+          {
+            method: 'GET',
+            headers: {
+              'X-Jwt-Client-Boondmanager': jwtToken
+            }
+          }
+        );
+
+        if (responseProjects.ok) {
+          const resultProjects = await responseProjects.json();
+          console.log('API Response Projects:', resultProjects);
+          setProjectData(resultProjects);
+        } else {
+          console.log('Request failed with HTTP status ' + responseProjects.status);
+        }
+
+        const responseResources = await fetch(
+          'https://ui.boondmanager.com/api/resources',
+          {
+            method: 'GET',
+            headers: {
+              'X-Jwt-Client-Boondmanager': jwtToken
+            }
+          }
+        );
+
+        if (responseResources.ok) {
+          const resultResources = await responseResources.json();
+          console.log('API Response Resources:', resultResources);
+          setResourceData(resultResources);
+        } else {
+          console.log('Request failed with HTTP status ' + responseResources.status);
+        }
 
         setLoading(false);
       } catch (error) {
-        console.error('Erreur lors de la requête API:', error);
+        console.error('API request error:', error);
         setLoading(false);
       }
     };
@@ -103,14 +166,72 @@ const App = () => {
     callApi();
   }, [reload]);
 
-  const handleReload = () => setReload(!reload);
+  const handleCandidateCreated = () => {
+    setReload(!reload);
+  };
+
+  const handleCandidateUpdated = () => {
+    setReload(!reload);
+  };
+
+  const handleCandidateDeleted = () => {
+    setReload(!reload);
+  };
+
+  const handleContactCreated = () => {
+    setReload(!reload);
+  };
+
+  const handleContactUpdated = () => {
+    setReload(!reload);
+  };
+
+  const handleContactDeleted = () => {
+    setReload(!reload);
+  };
+
+  const handleProjectCreated = () => {
+    setReload(!reload);
+  };
+
+  const handleProjectUpdated = () => {
+    setReload(!reload);
+  };
+
+  const handleProjectDeleted = () => {
+    setReload(!reload);
+  };
+
+  const handleResourceCreated = () => {
+    setReload(!reload);
+  };
+
+  const handleResourceUpdated = () => {
+    setReload(!reload);
+  };
+
+  const handleResourceDeleted = () => {
+    setReload(!reload);
+  };
+
+  const handleActionCreated = () => {
+    setReload(!reload);
+  };
+
+  const handleActionUpdated = () => {
+    setReload(!reload);
+  };
+
+  const handleActionDeleted = () => {
+    setReload(!reload);
+  };
 
   if (loading) {
-    return <p>Chargement...</p>;
+    return <p>Loading...</p>;
   }
 
   if (!userData || !contactData || !companyData || !projectData || !resourceData) {
-    return <p>Erreur lors de la récupération des données.</p>;
+    return <p>Error fetching data.</p>;
   }
 
   return (
@@ -124,33 +245,41 @@ const App = () => {
               <Route path="/candidates" element={
                 <>
                   <Candiatelist candidates={userData.data} />
-                  <CreateCandidateForm onCandidateCreated={handleReload} />
-                  <UpdateCandidateForm onCandidateUpdated={handleReload} />
-                  <DeleteCandidateForm onCandidateDeleted={handleReload} />
+                  <CreateCandidateForm onCandidateCreated={handleCandidateCreated} />
+                  <UpdateCandidateForm onCandidateUpdated={handleCandidateUpdated} />
+                  <DeleteCandidateForm onCandidateDeleted={handleCandidateDeleted} />
                 </>
               } />
               <Route path="/contacts" element={
                 <>
                   <Contactlist contacts={contactData.data} companies={companyData} states={states} />
-                  <CreateContactForm onContactCreated={handleReload} companies={companyData} states={states} />
-                  <UpdateContactForm onContactUpdated={handleReload} companies={companyData} states={states} />
-                  <DeleteContactForm onContactDeleted={handleReload} />
+                  <CreateContactForm onContactCreated={handleContactCreated} companies={companyData} states={states} />
+                  <UpdateContactForm onContactUpdated={handleContactUpdated} companies={companyData} states={states} />
+                  <DeleteContactForm onContactDeleted={handleContactDeleted} />
                 </>
               } />
               <Route path="/projects" element={
                 <>
                   <Projectlist projects={projectData.data} />
-                  <CreateProjectForm onProjectCreated={handleReload} contacts={contactData.data} companies={companyData} resources={resourceData} />
-                  <UpdateProjectForm onProjectUpdated={handleReload} contacts={contactData.data} companies={companyData} resources={resourceData} />
-                  <DeleteProjectForm onProjectDeleted={handleReload} />
+                  <CreateProjectForm onProjectCreated={handleProjectCreated} companies={companyData} contacts={contactData.data} resources={resourceData.data} />
+                  <UpdateProjectForm onProjectUpdated={handleProjectUpdated} />
+                  <DeleteProjectForm onProjectDeleted={handleProjectDeleted} />
                 </>
               } />
               <Route path="/resources" element={
                 <>
-                  <Resourcelist resources={resourceData} />
-                  <CreateResourceForm onResourceCreated={handleReload} />
-                  <UpdateResourceForm onResourceUpdated={handleReload} />
-                  <DeleteResourceForm onResourceDeleted={handleReload} />
+                  <Resourcelist resources={resourceData.data} />
+                  <CreateResourceForm onResourceCreated={handleResourceCreated} />
+                  <UpdateResourceForm onResourceUpdated={handleResourceUpdated} />
+                  <DeleteResourceForm onResourceDeleted={handleResourceDeleted} />
+                </>
+              } />
+              <Route path="/actions" element={
+                <>
+                  <Actionlist resources={resourceData.data} />
+                  <CreateActionForm onActionCreated={handleActionCreated} />
+                  <UpdateActionForm onActionUpdated={handleActionUpdated} />
+                  <DeleteActionForm onActionDeleted={handleActionDeleted} />
                 </>
               } />
             </Routes>
