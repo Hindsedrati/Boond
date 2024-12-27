@@ -1,4 +1,3 @@
-//import React from 'react';
 import { Link } from 'react-router-dom';
 
 const Header = () => {
@@ -26,9 +25,36 @@ const Header = () => {
         <li style={styles.navItem}>
           <Link to="/actions" style={styles.navLink}>Actions</Link>
         </li>
+        <li style={styles.navItem} onMouseOver={handleMouseOver} onMouseOut={handleMouseOut}>
+          <span style={styles.navLink}>Reporting</span>
+          <ul style={styles.dropdownList}>
+            <li style={styles.dropdownItem}>
+              <Link to="/reporting-companies" style={styles.dropdownLink}>Companies</Link>
+            </li>
+            <li style={styles.dropdownItem}>
+              <Link to="/reporting-production-plans" style={styles.dropdownLink}>Production Plans</Link>
+            </li>
+            <li style={styles.dropdownItem}>
+              <Link to="/reporting-projects" style={styles.dropdownLink}>Projects</Link>
+            </li>
+            <li style={styles.dropdownItem}>
+              <Link to="/reporting-resources" style={styles.dropdownLink}>Resources</Link>
+            </li>
+          </ul>
+        </li>
       </ul>
     </nav>
   );
+
+  function handleMouseOver(e) {
+    const dropdown = e.currentTarget.querySelector('ul');
+    dropdown.style.display = 'block';
+  }
+
+  function handleMouseOut(e) {
+    const dropdown = e.currentTarget.querySelector('ul');
+    dropdown.style.display = 'none';
+  }
 };
 
 const styles = {
@@ -56,11 +82,33 @@ const styles = {
   },
   navItem: {
     margin: '0 10px',
+    position: 'relative',
   },
   navLink: {
     color: 'white',
     textDecoration: 'none',
-  }
+  },
+  dropdownList: {
+    display: 'none',
+    position: 'absolute',
+    top: '100%',
+    left: '0',
+    backgroundColor: '#1976d2',
+    listStyle: 'none',
+    padding: '0',
+    margin: '0',
+    boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
+    zIndex: '1000',
+  },
+  dropdownItem: {
+    margin: '0',
+  },
+  dropdownLink: {
+    display: 'block',
+    padding: '10px 20px',
+    color: 'white',
+    textDecoration: 'none',
+  },
 };
 
 export default Header;

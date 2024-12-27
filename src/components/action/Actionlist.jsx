@@ -1,35 +1,57 @@
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import { jwtEncode } from '../../utils/utils';
 
-const ActionList = ({ actions }) => {
-  if (!Array.isArray(actions)) {
-    return <p>Pas dactions disponibles</p>;
-  }
+const ActionList = () => {
+  const [actions, setActions] = useState([]);
+  const ClientToken = "6e616f706c61795f73616e64626f78";
+  const ClientKey = "4488aa91d7a63630e391";
+  const UserToken = "332e6e616f706c61795f73616e64626f78";
+
+  useEffect(() => {
+    const fetchActions = async () => {
+      const payload = {
+        userToken: UserToken,
+        clientToken: ClientToken,
+        time: Math.floor(Date.now() / 1000),
+        mode: 'normal'
+      };
+
+      const jwtToken = jwtEncode(payload, ClientKey);
+
+      try {
+        const response = await fetch('https://ui.boondmanager.com/api/actions', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Jwt-Client-Boondmanager': jwtToken
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          setActions(result.data);
+        } else {
+          console.error('Failed to fetch actions:', response.status);
+        }
+      } catch (error) {
+        console.error('Error during API request:', error);
+      }
+    };
+
+    fetchActions();
+  }, []);
 
   return (
     <div>
-      <h2>Liste de toutes les actions</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Titre</th>
-            <th>Description</th>
-            <th>Date</th>
-            <th>État</th>
-          </tr>
-        </thead>
-        <tbody>
-          {actions.map((action) => (
-            <tr key={action.id}>
-              <td>{action.id}</td>
-              <td>{action.attributes.title}</td>
-              <td>{action.attributes.description}</td>
-              <td>{action.attributes.date}</td>
-              <td>{action.attributes.state}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <h2>Liste des actions</h2>
+      <ul>
+        {actions.map((action) => (
+          <li key={action.id}>
+            {action.attributes.title} - {action.attributes.description}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
@@ -40,12 +62,10 @@ ActionList.propTypes = {
       id: PropTypes.string.isRequired,
       attributes: PropTypes.shape({
         title: PropTypes.string.isRequired,
-        description: PropTypes.string.isRequired,
-        date: PropTypes.string.isRequired,
-        state: PropTypes.string.isRequired,
-      }).isRequired,
+        description: PropTypes.string.isRequired
+      }).isRequired
     })
-  ).isRequired,
+  )
 };
 
 export default ActionList;

@@ -27,6 +27,11 @@ import CreateActionForm from './components/action/CreateActionForm';
 import UpdateActionForm from './components/action/UpdateActionForm';
 import DeleteActionForm from './components/action/DeleteActionForm';
 
+import ReportingCompanies from './components/reporting/ReportingCompanies';
+import ReportingProductionPlans from './components/reporting/ReportingProductionPlans';
+import ReportingProjects from './components/reporting/ReportingProjects';
+import ReportingResources from './components/reporting/ReportingResources';
+
 import Header from './components/Header';
 import Home from './components/Home';
 
@@ -282,6 +287,10 @@ const App = () => {
                   <DeleteActionForm onActionDeleted={handleActionDeleted} />
                 </>
               } />
+              <Route path="/reporting-companies" element={<ReportingCompanies />} />
+              <Route path="/reporting-production-plans" element={<ReportingProductionPlans />} />
+              <Route path="/reporting-projects" element={<ReportingProjects />} />
+              <Route path="/reporting-resources" element={<ReportingResources />} />
             </Routes>
           </div>
         </main>
