@@ -1,36 +1,36 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
-import {
-  Box,
-  Button,
-  FormControl,
-  FormLabel,
-  Input
-} from '@mui/material';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { useEffect, useState } from "react";
+import PropTypes from "prop-types";
+import { toast } from "react-toastify";
 import { jwtEncode } from "../../utils/utils";
+import "../../App.css"; // ✅ Import du CSS global
 
-const DeleteCandidateForm = ({ onCandidateDeleted }) => {
+const DeleteCandidateForm = ({ candidateId, onCandidateDeleted, onClose }) => {
   const ClientToken = "6e616f706c61795f73616e64626f78";
   const ClientKey = "4488aa91d7a63630e391";
   const UserToken = "332e6e616f706c61795f73616e64626f78";
 
-  const [candidateId, setCandidateId] = useState("");
+  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleInputChange = (event) => {
-    const { value } = event.target;
-    setCandidateId(value);
-  };
-
-  const handleDelete = async (event) => {
-    event.preventDefault();
-
+  useEffect(() => {
+    console.log("🔍 ID du candidat à supprimer :", candidateId);
     if (!candidateId) {
-      setErrorMessage("Veuillez entrer un ID de candidat valide.");
+      setErrorMessage("❌ Erreur : Aucun ID candidat sélectionné.");
+    }
+  }, [candidateId]);
+
+  const deleteCandidate = async () => {
+    if (!candidateId) {
+      toast.warn("⚠️ Aucun ID candidat sélectionné.");
       return;
     }
+
+    if (!window.confirm(`Voulez-vous vraiment supprimer le candidat ${candidateId} ?`)) {
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage("");
 
     try {
       const payload = {
@@ -41,8 +41,11 @@ const DeleteCandidateForm = ({ onCandidateDeleted }) => {
       };
 
       const jwtToken = jwtEncode(payload, ClientKey);
+
+      console.log("📤 Envoi de la requête DELETE pour le candidat :", candidateId);
+
       const response = await fetch(
-        `https://ui.boondmanager.com/api/candidates/${candidateId}`,
+        `https://ui.boondmanager.com/api/candidates/${candidateId}`, 
         {
           method: "DELETE",
           headers: {
@@ -51,41 +54,55 @@ const DeleteCandidateForm = ({ onCandidateDeleted }) => {
         }
       );
 
-      if (response.ok) {
-        onCandidateDeleted();
-        setErrorMessage("");
-        toast.success("Candidat supprimé avec succès !");
-      } else {
-        setErrorMessage(`Requête en échec avec un statut HTTP ${response.status}`);
-        toast.error("Erreur lors de la suppression du candidat !");
+      const result = await response.json();
+      console.log("📩 Réponse API après suppression :", result);
+
+      if (!response.ok) {
+        throw new Error(`Erreur DELETE: ${response.status} - ${JSON.stringify(result)}`);
       }
+
+      toast.success(`✅ Candidat ${candidateId} supprimé avec succès !`);
+
+      if (typeof onCandidateDeleted === "function") {
+        console.log("🔄 Rafraîchissement de la liste des candidats...");
+        onCandidateDeleted(); // 🔄 Rafraîchir la liste
+      } else {
+        console.warn("⚠️ onCandidateDeleted n'est pas défini !");
+      }
+
+      onClose(); // ✅ Ferme la popup après suppression
+
     } catch (error) {
-      console.error("Erreur lors de la requête API:", error);
-      setErrorMessage("Erreur lors de la requête API: " + error.message);
-      toast.error("Erreur lors de la suppression du candidat !");
+      console.error("❌ Erreur suppression candidat :", error);
+      setErrorMessage("Erreur lors de la suppression du candidat.");
+      toast.error("❌ Échec de la suppression !");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Box component="form" onSubmit={handleDelete} sx={{ mt: 3 }}>
-      {errorMessage && <Box color="error.main">{errorMessage}</Box>}
-      <FormControl fullWidth margin="normal">
-        <FormLabel>ID du candidat</FormLabel>
-        <Input
-          type="text"
-          value={candidateId}
-          onChange={handleInputChange}
-        />
-      </FormControl>
-      <Button type="submit" variant="contained" color="primary" sx={{ mt: 3 }}>
-        Supprimer
-      </Button>
-    </Box>
+    <div className="modal">
+      <h3>Supprimer un candidat</h3>
+
+      {errorMessage && <p className="error-message">{errorMessage}</p>}
+
+      <label>ID du candidat :</label>
+      <input type="text" value={candidateId || ""} readOnly />
+
+      <button className="btn-delete" onClick={deleteCandidate} disabled={loading}>
+        {loading ? "Suppression..." : "🗑️ Supprimer"}
+      </button>
+      <button className="btn-close" onClick={onClose}>❌ Annuler</button>
+    </div>
   );
 };
 
+// 📌 Validation des props
 DeleteCandidateForm.propTypes = {
+  candidateId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   onCandidateDeleted: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default DeleteCandidateForm;

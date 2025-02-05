@@ -1,48 +1,55 @@
-// src/components/candidate/UpdateCandidateForm.jsx
-
-import { useState } from 'react';
-import PropTypes from 'prop-types';
-import {
-  Box,
-  Button,
-  FormControl,
-  FormLabel,
-  Input,
-  
-} from '@mui/material';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { jwtEncode } from "../../utils/utils";
+import "../../App.css"; // ✅ Import du CSS global
 
-const UpdateCandidateForm = ({ onCandidateUpdated }) => {
+const UpdateCandidateForm = ({ candidate, onClose, onCandidateUpdated }) => {
   const ClientToken = "6e616f706c61795f73616e64626f78";
   const ClientKey = "4488aa91d7a63630e391";
   const UserToken = "332e6e616f706c61795f73616e64626f78";
 
-  const [candidateId, setCandidateId] = useState("");
-  const [candidateData, setCandidateData] = useState({
+  const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email1: "",
     phone1: "",
-    title: "", // Ajout du champ "fonction"
-    state: 0
+    title: "",
+    state: 0,
   });
+
+  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // 📌 Chargement des données du candidat sélectionné
+  useEffect(() => {
+    if (candidate) {
+      setFormData({
+        firstName: candidate.attributes?.firstName || "",
+        lastName: candidate.attributes?.lastName || "",
+        email1: candidate.attributes?.email1 || "",
+        phone1: candidate.attributes?.phone1 || "",
+        title: candidate.attributes?.title || "",
+        state: candidate.attributes?.state || 0,
+      });
+    }
+  }, [candidate]);
+
+  // 📌 Mise à jour des champs
   const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setCandidateData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
+    setFormData({ ...formData, [event.target.name]: event.target.value });
   };
 
-  const handleSearch = async () => {
-    if (!candidateId) {
-      setErrorMessage("Veuillez entrer un ID de candidat valide.");
+  // 📌 Fonction pour soumettre la mise à jour à l'API
+  const updateCandidate = async () => {
+    if (!candidate) {
+      toast.warn("Aucun candidat sélectionné !");
       return;
     }
+
+    setLoading(true);
+    setErrorMessage("");
 
     try {
       const payload = {
@@ -53,145 +60,94 @@ const UpdateCandidateForm = ({ onCandidateUpdated }) => {
       };
 
       const jwtToken = jwtEncode(payload, ClientKey);
+
       const response = await fetch(
-        `https://ui.boondmanager.com/api/candidates/${candidateId}/information`,
-        {
-          method: "GET",
-          headers: {
-            "X-Jwt-Client-Boondmanager": jwtToken,
-          },
-        }
-      );
-
-      if (response.ok) {
-        const result = await response.json();
-        const candidate = result.data.attributes;
-        setCandidateData({
-          firstName: candidate.firstName,
-          lastName: candidate.lastName,
-          email1: candidate.email1 || "",
-          phone1: candidate.phone1 || "",
-          title: candidate.title || "",
-          state: candidate.state || 0
-        });
-        setErrorMessage("");
-      } else {
-        setErrorMessage(`Requête en échec avec un statut HTTP ${response.status}`);
-        toast.error("Erreur lors de la récupération du candidat !");
-      }
-    } catch (error) {
-      console.error("Erreur lors de la requête API:", error);
-      setErrorMessage("Erreur lors de la requête API: " + error.message);
-      toast.error("Erreur lors de la récupération du candidat !");
-    }
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    if (!candidateId) {
-      setErrorMessage("Veuillez entrer un ID de candidat valide.");
-      return;
-    }
-
-    try {
-      const payload = {
-        userToken: UserToken,
-        clientToken: ClientToken,
-        time: Math.floor(Date.now() / 1000),
-        mode: "normal",
-      };
-
-      const jwtToken = jwtEncode(payload, ClientKey);
-      const response = await fetch(
-        `https://ui.boondmanager.com/api/candidates/${candidateId}/information`,
+        `https://ui.boondmanager.com/api/candidates/${candidate.id}/information`,
         {
           method: "PUT",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "application/vnd.api+json",
             "X-Jwt-Client-Boondmanager": jwtToken,
           },
           body: JSON.stringify({
             data: {
-              type: "candidate",
-              id: candidateId,
-              attributes: {
-                firstName: candidateData.firstName,
-                lastName: candidateData.lastName,
-                email1: candidateData.email1,
-                phone1: candidateData.phone1,
-                title: candidateData.title,
-                state: candidateData.state,
-              },
+              type: "candidates",
+              id: candidate.id,
+              attributes: { ...formData },
             },
           }),
         }
       );
 
-      if (response.ok) {
-        onCandidateUpdated();
-        setErrorMessage("");
-        toast.success("Candidat mis à jour avec succès !");
-      } else {
-        setErrorMessage(`Requête en échec avec un statut HTTP ${response.status}`);
-        toast.error("Erreur lors de la mise à jour du candidat !");
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(`Erreur API: ${JSON.stringify(result)}`);
       }
+
+      toast.success("✅ Candidat mis à jour avec succès !");
+
+      if (typeof onCandidateUpdated === "function") {
+        onCandidateUpdated(); // ✅ Rafraîchir la liste
+      } else {
+        console.error("❌ onCandidateUpdated n'est pas une fonction !");
+      }
+
+      setTimeout(() => {
+        onClose(); // ✅ Assurer la fermeture de la modal
+      }, 500);
+
     } catch (error) {
-      console.error("Erreur lors de la requête API:", error);
-      setErrorMessage("Erreur lors de la requête API: " + error.message);
-      toast.error("Erreur lors de la mise à jour du candidat !");
+      console.error("❌ Erreur mise à jour candidat :", error);
+      setErrorMessage("Erreur lors de la mise à jour du candidat.");
+      toast.error("❌ Échec de la mise à jour !");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
-      {errorMessage && <Box color="error.main">{errorMessage}</Box>}
-      <FormControl fullWidth margin="normal">
-        <FormLabel>ID du candidat</FormLabel>
-        <Input
-          type="text"
-          value={candidateId}
-          onChange={(e) => setCandidateId(e.target.value)}
-        />
-        <Button type="button" variant="contained" color="primary" onClick={handleSearch} sx={{ mt: 3 }}>
-          Rechercher
-        </Button>
-      </FormControl>
-      <FormControl fullWidth margin="normal">
-        <FormLabel>Prénom</FormLabel>
-        <Input
-          type="text"
-          name="firstName"
-          value={candidateData.firstName}
-          onChange={handleInputChange}
-        />
-      </FormControl>
-      <FormControl fullWidth margin="normal">
-        <FormLabel>Nom</FormLabel>
-        <Input
-          type="text"
-          name="lastName"
-          value={candidateData.lastName}
-          onChange={handleInputChange}
-        />
-      </FormControl>
-      <FormControl fullWidth margin="normal">
-        <FormLabel>Fonction</FormLabel>
-        <Input
-          type="text"
-          name="title"
-          value={candidateData.title}
-          onChange={handleInputChange}
-        />
-      </FormControl>
-      <Button type="submit" variant="contained" color="primary" sx={{ mt: 3 }}>
-        Mettre à jour
-      </Button>
-    </Box>
+    <div className="modal">
+      <h3>Modifier le candidat</h3>
+      {errorMessage && <p className="error-message">{errorMessage}</p>}
+
+      <label>Nom:</label>
+      <input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} />
+
+      <label>Prénom:</label>
+      <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} />
+
+      <label>Email:</label>
+      <input type="email" name="email1" value={formData.email1} onChange={handleInputChange} />
+
+      <label>Téléphone:</label>
+      <input type="tel" name="phone1" value={formData.phone1} onChange={handleInputChange} />
+
+      <label>Fonction:</label>
+      <input type="text" name="title" value={formData.title} onChange={handleInputChange} />
+
+      <button className="btn-save" onClick={updateCandidate} disabled={loading}>
+        {loading ? "Mise à jour..." : "✅ Sauvegarder"}
+      </button>
+      <button className="btn-close" onClick={onClose}>❌ Fermer</button>
+    </div>
   );
 };
 
+// 📌 Validation des props
 UpdateCandidateForm.propTypes = {
+  candidate: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    attributes: PropTypes.shape({
+      firstName: PropTypes.string,
+      lastName: PropTypes.string,
+      email1: PropTypes.string,
+      phone1: PropTypes.string,
+      title: PropTypes.string,
+      state: PropTypes.number,
+    }).isRequired,
+  }),
+  onClose: PropTypes.func.isRequired,
   onCandidateUpdated: PropTypes.func.isRequired,
 };
 
