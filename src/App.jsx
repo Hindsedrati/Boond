@@ -4,13 +4,27 @@ import { jwtEncode } from "./utils/utils";
 
 import Candiatelist from "./components/candidate/Candidatelist";
 import CreateCandidateForm from "./components/candidate/CreateCandidateForm";
-import UpdateCandidateForm from "./components/candidate/UpdateCandidateForm";
 import DeleteCandidateForm from "./components/candidate/DeleteCandidateForm";
 
 import Contactlist from "./components/contact/Contactlist";
 import CreateContactForm from "./components/contact/CreateContactForm";
 import UpdateContactForm from "./components/contact/UpdateContactForm";
 import DeleteContactForm from "./components/contact/DeleteContactForm";
+
+import Projectlist from "./components/project/Projectlist";
+import CreateProjectForm from "./components/project/CreateProjectForm";
+import UpdateProjectForm from "./components/project/UpdateProjectForm";
+import DeleteProjectForm from "./components/project/DeleteProjectForm";
+
+import Resourcelist from "./components/resource/Resourcelist";
+import CreateResourceForm from "./components/resource/CreateResourceForm";
+import UpdateResourceForm from "./components/resource/UpdateResourceForm";
+import DeleteResourceForm from "./components/resource/DeleteResourceForm";
+
+import ReportingCompanies from "./components/reporting/ReportingCompanies";
+import ReportingProductionPlans from "./components/reporting/ReportingProductionPlans";
+import ReportingProjects from "./components/reporting/ReportingProjects";
+import ReportingResources from "./components/reporting/ReportingResources";
 
 import Header from "./components/Header";
 import Home from "./components/Home";
@@ -23,9 +37,9 @@ const App = () => {
   const [candidates, setCandidates] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [companies, setCompanies] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [reload, setReload] = useState(false);
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [candidateToDelete, setCandidateToDelete] = useState(null);
 
@@ -40,7 +54,7 @@ const App = () => {
     9: "Fournisseur",
   };
 
-  // ✅ Fonction pour récupérer les données de l'API
+  // ✅ Récupération des données API
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -58,6 +72,8 @@ const App = () => {
         candidates: "https://ui.boondmanager.com/api/candidates",
         contacts: "https://ui.boondmanager.com/api/contacts",
         companies: "https://ui.boondmanager.com/api/companies",
+        projects: "https://ui.boondmanager.com/api/projects",
+        resources: "https://ui.boondmanager.com/api/resources",
       };
 
       const responses = await Promise.all(
@@ -80,6 +96,12 @@ const App = () => {
           case "companies":
             setCompanies(data.data || []);
             break;
+          case "projects":
+            setProjects(data.data || []);
+            break;
+          case "resources":
+            setResources(data.data || []);
+            break;
           default:
             break;
         }
@@ -94,19 +116,14 @@ const App = () => {
 
   useEffect(() => {
     fetchData();
-  }, [reload]);
+  }, []);
 
-  // ✅ Rafraîchir les données
-  const handleReload = () => setReload(!reload);
-
-  // ✅ Suppression d'un candidat
-  const handleDeleteCandidate = async (candidateId) => {
-    console.log("🗑️ Suppression du candidat ID:", candidateId);
-    if (!candidateId) {
-      alert("ID du candidat invalide !");
-      return;
-    }
-
+  // ✅ Suppression d'un candidat avec mise à jour immédiate
+  // ✅ Fonction pour supprimer un candidat et mettre à jour la liste
+  const handleDeleteCandidate = async (id) => {
+    if (!id) return;
+    if (!window.confirm(`Voulez-vous vraiment supprimer le candidat ${id} ?`)) return;
+  
     try {
       const payload = {
         userToken: UserToken,
@@ -114,24 +131,23 @@ const App = () => {
         time: Math.floor(Date.now() / 1000),
         mode: "normal",
       };
-
+  
       const jwtToken = jwtEncode(payload, ClientKey);
-      const response = await fetch(
-        `https://ui.boondmanager.com/api/candidates/${candidateId}`,
-        {
-          method: "DELETE",
-          headers: {
-            "X-Jwt-Client-Boondmanager": jwtToken,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`❌ Erreur DELETE: ${response.status}`);
-      }
-
-      alert(`✅ Candidat ${candidateId} supprimé !`);
-      handleReload();
+      const response = await fetch(`https://ui.boondmanager.com/api/candidates/${id}`, {
+        method: "DELETE",
+        headers: { "X-Jwt-Client-Boondmanager": jwtToken },
+      });
+  
+      if (!response.ok) throw new Error(`Erreur DELETE: ${response.status}`);
+  
+      alert(`✅ Candidat ${id} supprimé avec succès !`);
+  
+      // 🔄 **Forcer la mise à jour après suppression**
+      setCandidates(prev => prev.filter(candidate => candidate.id !== id));
+  
+      // ✅ Optionnel : Vérifier si `fetchData` est nécessaire
+      // await fetchData(); 
+  
     } catch (error) {
       console.error("❌ Erreur lors de la suppression :", error);
       alert("Erreur lors de la suppression !");
@@ -139,6 +155,9 @@ const App = () => {
       setShowDeleteModal(false);
     }
   };
+  
+  
+
 
   if (loading) return <p>Chargement...</p>;
 
@@ -161,7 +180,7 @@ const App = () => {
                       setShowDeleteModal(true);
                     }}
                   />
-                  <CreateCandidateForm onCandidateCreated={handleReload} />
+                  <CreateCandidateForm onCandidateCreated={fetchData} />
                 </>
               }
             />
@@ -172,23 +191,53 @@ const App = () => {
                 companies.length > 0 && states ? (
                   <>
                     <Contactlist contacts={contacts} companies={companies} states={states} />
-                    <CreateContactForm onContactCreated={handleReload} companies={companies} states={states} />
-                    <UpdateContactForm onContactUpdated={handleReload} companies={companies} states={states} />
-                    <DeleteContactForm onContactDeleted={handleReload} />
+                    <CreateContactForm onContactCreated={fetchData} companies={companies} states={states} />
+                    <UpdateContactForm onContactUpdated={fetchData} companies={companies} states={states} />
+                    <DeleteContactForm onContactDeleted={fetchData} />
                   </>
                 ) : (
                   <p>⚠️ Chargement des contacts...</p>
                 )
               }
             />
+
+            <Route
+              path="/projects"
+              element={
+                <>
+                  <Projectlist projects={projects} />
+                  <CreateProjectForm onProjectCreated={fetchData} />
+                  <UpdateProjectForm onProjectUpdated={fetchData} />
+                  <DeleteProjectForm onProjectDeleted={fetchData} />
+                </>
+              }
+            />
+
+            <Route
+              path="/resources"
+              element={
+                <>
+                  <Resourcelist resources={resources} />
+                  <CreateResourceForm onResourceCreated={fetchData} />
+                  <UpdateResourceForm onResourceUpdated={fetchData} />
+                  <DeleteResourceForm onResourceDeleted={fetchData} />
+                </>
+              }
+            />
+
+            <Route path="/reporting-companies" element={<ReportingCompanies />} />
+            <Route path="/reporting-production-plans" element={<ReportingProductionPlans />} />
+            <Route path="/reporting-projects" element={<ReportingProjects />} />
+            <Route path="/reporting-resources" element={<ReportingResources />} />
           </Routes>
         </div>
       </main>
 
+      {/* ✅ Popup suppression */}
       {showDeleteModal && candidateToDelete && (
         <DeleteCandidateForm
           candidateId={candidateToDelete}
-          onCandidateDeleted={handleReload}
+          onCandidateDeleted={handleDeleteCandidate}
           onClose={() => setShowDeleteModal(false)}
         />
       )}

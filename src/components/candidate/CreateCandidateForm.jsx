@@ -1,12 +1,6 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Box,
-  Button,
-  FormControl,
-  FormLabel,
-  Input
-} from '@mui/material';
+import { Box, Button, FormControl, FormLabel, Input } from '@mui/material';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { jwtEncode } from "../../utils/utils";
@@ -27,33 +21,13 @@ const CreateCandidateForm = ({ onCandidateCreated }) => {
       typeOf: -1,
       title: "",
       email1: "",
-      email2: "",
-      email3: "",
       phone1: "",
-      phone2: "",
-      phone3: "",
-      fax: "",
       address: "",
       postcode: "",
       town: "",
-      country: "",
-      source: {
-        typeOf: -1,
-        detail: "",
-      },
-      dateOfBirth: "",
-      mobilityAreas: [],
-      globalEvaluation: "",
-      evaluations: [],
-      availability: "",
+      country: "France",
+      availability: "2025-02-07", // ✅ Correction ici : une date valide
       isVisible: true,
-      informationComments: "",
-      socialNetworks: [],
-      importResumes: false,
-      importFiles: false,
-      importContractFiles: false,
-      importContract: false,
-      importFields: [],
     }
   });
 
@@ -99,18 +73,21 @@ const CreateCandidateForm = ({ onCandidateCreated }) => {
         }
       );
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log("API Response:", result);
-        setErrorMessage("");
-        toast.success("Candidat créé avec succès !");
-        onCandidateCreated(); // Lever l'état pour indiquer la création
-      } else {
-        console.log("Requête en échec avec un statut HTTP " + response.status);
+      const result = await response.json();
+      console.log("📩 Réponse API :", result);
+
+      if (!response.ok) {
+        console.error(`❌ Erreur API ${response.status}: ${JSON.stringify(result.errors, null, 2)}`);
         toast.error("Erreur lors de la création du candidat.");
+        return;
       }
+
+      setErrorMessage("");
+      toast.success("Candidat créé avec succès !");
+      onCandidateCreated(); // ✅ Met à jour la liste des candidats
+
     } catch (error) {
-      console.error("Erreur lors de la requête API:", error);
+      console.error("❌ Erreur lors de la requête API:", error);
       toast.error("Erreur lors de la requête API.");
     }
   };

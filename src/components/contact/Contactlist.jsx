@@ -4,9 +4,11 @@ import { cleanContactData } from "../../utils/cleanContacts"; // Nettoyage des c
 
 const Contactlist = ({ contacts, companies, states }) => {
   console.log("🔍 Contacts reçus AVANT nettoyage :", contacts);
+  console.log("🏢 Entreprises reçues :", companies);
+  console.log("🌍 États reçus :", states);
 
-  if (!Array.isArray(contacts)) {
-    return <p>Pas de contacts disponibles</p>;
+  if (!Array.isArray(contacts) || contacts.length === 0) {
+    return <p>⚠️ Aucun contact disponible</p>;
   }
 
   // Appliquer le nettoyage AVANT affichage
@@ -15,7 +17,7 @@ const Contactlist = ({ contacts, companies, states }) => {
 
   return (
     <>
-      <h2>Liste des contacts avec emails valides</h2>
+      <h2>📋 Liste des contacts avec emails valides</h2>
       <table>
         <thead>
           <tr>
@@ -29,42 +31,41 @@ const Contactlist = ({ contacts, companies, states }) => {
           </tr>
         </thead>
         <tbody>
-          {cleanedContacts.length > 0 ? (
-            cleanedContacts.map((contact) => (
+          {cleanedContacts.map((contact) => {
+            const contactState = states[contact.attributes.state] || "Inconnu";
+            const company = companies.find(
+              (c) => c.id === contact.relationships?.company?.data?.id
+            );
+            const companyName = company ? company.attributes.name : "Non attribué";
+
+            return (
               <tr key={contact.id}>
                 <td>{contact.id}</td>
                 <td>{contact.attributes.lastName}</td>
                 <td>{contact.attributes.email1}</td>
                 <td>{contact.attributes.function || "N/A"}</td>
-                <td>{states[contact.attributes.state] || "Inconnu"}</td>
-                <td>
-                  {companies.find(company => company.id === contact.relationships?.company?.data?.id)?.attributes?.name || "Non attribué"}
-                </td>
+                <td>{contactState}</td>
+                <td>{companyName}</td>
                 <td>
                   <button onClick={() => sendEmail(contact)}>📧 Envoyer Email</button>
                 </td>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="7">Aucun contact avec email valide</td>
-            </tr>
-          )}
+            );
+          })}
         </tbody>
       </table>
     </>
   );
 };
 
-// Fonction pour envoyer un email via le serveur Node.js
+// ✅ Fonction pour envoyer un email via le serveur Node.js
 const sendEmail = async (contact) => {
   console.log(`📤 Tentative d'envoi d'email à ${contact.attributes.email1}...`);
 
-  // Récupération des informations du contact
   const { lastName, function: jobTitle, state } = contact.attributes;
-  const companyName = contact.relationships?.company?.data?.attributes?.name || "Non attribué";
+  const companyName =
+    contact.relationships?.company?.data?.attributes?.name || "Non attribué";
 
-  // Construction du message personnalisé
   const emailMessage = `
       Bonjour ${lastName},
 
@@ -80,31 +81,31 @@ const sendEmail = async (contact) => {
   `;
 
   try {
-      const response = await fetch('http://localhost:5000/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-              email: contact.attributes.email1, 
-              name: lastName,
-              message: emailMessage // On envoie le message personnalisé
-          }),
-      });
+    const response = await fetch("http://localhost:5000/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: contact.attributes.email1,
+        name: lastName,
+        message: emailMessage,
+      }),
+    });
 
-      const result = await response.json();
-      console.log("✅ Réponse complète du serveur :", result);
+    const result = await response.json();
+    console.log("✅ Réponse complète du serveur :", result);
 
-      if (result.message) {
-          alert(result.message);
-      } else {
-          alert("❌ Erreur : " + JSON.stringify(result));
-      }
+    if (result.message) {
+      alert(result.message);
+    } else {
+      alert("❌ Erreur : " + JSON.stringify(result));
+    }
   } catch (error) {
-      console.error('❌ Erreur lors de l’envoi de l’email :', error);
-      alert("Échec de l’envoi de l’email. Voir console.");
+    console.error("❌ Erreur lors de l’envoi de l’email :", error);
+    alert("Échec de l’envoi de l’email. Voir console.");
   }
 };
 
-
+// ✅ Validation des props
 Contactlist.propTypes = {
   contacts: PropTypes.arrayOf(
     PropTypes.shape({
@@ -112,27 +113,27 @@ Contactlist.propTypes = {
       attributes: PropTypes.shape({
         lastName: PropTypes.string.isRequired,
         email1: PropTypes.string.isRequired,
-        function: PropTypes.string.isRequired,
+        function: PropTypes.string,
         state: PropTypes.number.isRequired,
       }).isRequired,
       relationships: PropTypes.shape({
         company: PropTypes.shape({
           data: PropTypes.shape({
-            id: PropTypes.string.isRequired
-          }).isRequired
-        }).isRequired
-      }).isRequired
+            id: PropTypes.string.isRequired,
+          }),
+        }),
+      }),
     })
   ).isRequired,
   companies: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string.isRequired,
       attributes: PropTypes.shape({
-        name: PropTypes.string.isRequired
-      }).isRequired
+        name: PropTypes.string.isRequired,
+      }).isRequired,
     })
   ).isRequired,
-  states: PropTypes.object.isRequired
+  states: PropTypes.object.isRequired,
 };
 
 export default Contactlist;
